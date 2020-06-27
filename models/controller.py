@@ -1,6 +1,6 @@
 ## Modifications of the code provided in:
     ## https://github.com/TDeVries/enas_pytorch
-## Made by Esau Alain Hervert Hernandez
+## Modifications made by Esau Alain Hervert Hernandez
 
 import torch
 import torch.nn as nn
