@@ -58,7 +58,7 @@ class FactorizedReduction(nn.Module):
             out = self.bn(out)
             return out
 
-
+## This creates the layer which is specified by the value 0 through 5 which tells us what kind of operation to perform.
 class ENASLayer(nn.Module):
     '''
     https://github.com/melodyguan/enas/blob/master/src/cifar10/general_child.py#L245
@@ -66,10 +66,13 @@ class ENASLayer(nn.Module):
     def __init__(self, layer_id, in_planes, out_planes):
         super(ENASLayer, self).__init__()
 
-        self.layer_id = layer_id
-        self.in_planes = in_planes
-        self.out_planes = out_planes
+        self.layer_id = layer_id ## Type of operation performed on the inputs
+        self.in_planes = in_planes ## Number of inputs
+        self.out_planes = out_planes ## Number of outputs
 
+        ## Here we have the options that we have at each branch
+        ## We have that we can do convolutions of size 3 and 5 (either standard or separable)
+        ## We can also do either max or average pooling
         self.branch_0 = ConvBranch(in_planes, out_planes, kernel_size=3)
         self.branch_1 = ConvBranch(in_planes, out_planes, kernel_size=3, separable=True)
         self.branch_2 = ConvBranch(in_planes, out_planes, kernel_size=5)
@@ -79,6 +82,7 @@ class ENASLayer(nn.Module):
 
         self.bn = nn.BatchNorm2d(out_planes, track_running_stats=False)
 
+    ## We will do the operation then batch normalization.
     def forward(self, x, prev_layers, sample_arc):
         layer_type = sample_arc[0]
         if self.layer_id > 0:
@@ -108,7 +112,7 @@ class ENASLayer(nn.Module):
         out = self.bn(out)
         return out
 
-
+## Generates the fixed layers of the fixed architecture
 class FixedLayer(nn.Module):
     '''
     https://github.com/melodyguan/enas/blob/master/src/cifar10/general_child.py#L245
@@ -162,7 +166,7 @@ class FixedLayer(nn.Module):
         out = self.dim_reduc(prev)
         return out
 
-
+## Define separable convolution
 class SeparableConv(nn.Module):
     def __init__(self, in_planes, out_planes, kernel_size, bias):
         super(SeparableConv, self).__init__()
@@ -176,7 +180,8 @@ class SeparableConv(nn.Module):
         out = self.pointwise(out)
         return out
 
-
+## Here we define the convolution branches that can be performed
+## Has the form (conv -> bn -> ReLU)x2
 class ConvBranch(nn.Module):
     '''
     https://github.com/melodyguan/enas/blob/master/src/cifar10/general_child.py#L483
@@ -213,7 +218,8 @@ class ConvBranch(nn.Module):
         out = self.out_conv(out)
         return out
 
-
+## Here we define the pooling branches which are either average or max pooling
+## Has the form (conv -> bn -> ReLU) -> pool
 class PoolBranch(nn.Module):
     '''
     https://github.com/melodyguan/enas/blob/master/src/cifar10/general_child.py#L546
@@ -242,7 +248,7 @@ class PoolBranch(nn.Module):
         out = self.pool(out)
         return out
 
-
+## Here we have the child network that we can generate using the controller
 class SharedCNN(nn.Module):
     def __init__(self,
                  num_layers=12,
@@ -266,15 +272,17 @@ class SharedCNN(nn.Module):
             nn.Conv2d(3, out_filters, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_filters, track_running_stats=False))
 
+        ## nn.ModuleList([]) can hold the layers of the constructed network
         self.layers = nn.ModuleList([])
         self.pooled_layers = nn.ModuleList([])
 
+        ## Here we have that the layers will be generated depending on whether or not this is a fixed or exploratiry layer
         for layer_id in range(self.num_layers):
             if self.fixed_arc is None:
                 layer = ENASLayer(layer_id, self.out_filters, self.out_filters)
             else:
                 layer = FixedLayer(layer_id, self.out_filters, self.out_filters, self.fixed_arc[str(layer_id)])
-            self.layers.append(layer)
+            self.layers.append(layer) ## Add layer to the layers list
 
             if layer_id in self.pool_layers:
                 for i in range(len(self.layers)):
@@ -291,7 +299,7 @@ class SharedCNN(nn.Module):
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_uniform_(m.weight, mode='fan_in', nonlinearity='relu')
+                nn.init.kaiming_uniform_(m.weight, mode='fan_in', nonlinearity='relu') ## Initializing the convolutional layers
 
     def forward(self, x, sample_arc):
 
