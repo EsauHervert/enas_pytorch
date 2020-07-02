@@ -6,26 +6,26 @@ import os
 import sys
 import time
 import visdom ## Visualization Library
-import argparse
+import argparse. ## Allows us to pass arguments in terminal for the code
 import numpy as np
 
 import torch
 import torch.nn as nn
 # from torch.autograd import Variable
-from torchvision import datasets, transforms # Here we have the cifar10 data set
-from torch.utils.data.dataset import Subset
-from torch.optim.lr_scheduler import CosineAnnealingLR
+from torchvision import datasets, transforms ## Here we have the cifar10 data set
+from torch.utils.data.dataset import Subset ## Subset is the training data partitioned to training and validation
+from torch.optim.lr_scheduler import CosineAnnealingLR ## Changing the learning rate as time goes by
 
-from models.controller import Controller
-from models.shared_cnn import SharedCNN
-from utils.utils import AverageMeter, Logger
-from utils.cutout import Cutout
+from models.controller import Controller ## RNN that outputs child topologies
+from models.shared_cnn import SharedCNN ## Here lies all the constructions that the controller can create.
+from utils.utils import AverageMeter, Logger ## Helps with keeping track of performance
+from utils.cutout import Cutout ## Used in data augmentation
 
 parser = argparse.ArgumentParser(description='ENAS')
 
 parser.add_argument('--search_for', default='macro', choices=['macro']) ## This code only works with the Macro case.
-parser.add_argument('--data_path', default='/export/mlrg/terrance/Projects/data/', type=str)
-parser.add_argument('--output_filename', default='ENAS', type=str)
+parser.add_argument('--data_path', default='/export/mlrg/terrance/Projects/data/', type=str) ## Where the data will be contained
+parser.add_argument('--output_filename', default='ENAS', type=str) ## Name of the output file
 parser.add_argument('--resume', default='', type=str)
 parser.add_argument('--batch_size', type=int, default=128)
 parser.add_argument('--num_epochs', type=int, default=310)
@@ -37,7 +37,7 @@ parser.add_argument('--fixed_arc', action='store_true', default=False)
 
 parser.add_argument('--child_num_layers', type=int, default=12)
 parser.add_argument('--child_out_filters', type=int, default=36)
-parser.add_argument('--child_grad_bound', type=float, default=5.0)
+parser.add_argument('--child_grad_bound', type=float, default=5.0) ## Bounds gradient so we avoid exploding gradients
 parser.add_argument('--child_l2_reg', type=float, default=0.00025)
 parser.add_argument('--child_num_branches', type=int, default=6)
 parser.add_argument('--child_keep_prob', type=float, default=0.9)
@@ -60,10 +60,12 @@ parser.add_argument('--controller_bl_dec', type=float, default=0.99)
 
 args = parser.parse_args()
 
+"""
 vis = visdom.Visdom()
 vis.env = 'ENAS_' + args.output_filename
 vis_win = {'shared_cnn_acc': None, 'shared_cnn_loss': None, 'controller_reward': None,
            'controller_acc': None, 'controller_loss': None}
+"""
 
 ## Here we load the dataset whichi on our case is the CIFAR-10 dataset.
     ## Note that we can also try things such as MNIST, but we would have to change some values.
@@ -166,7 +168,9 @@ def train_shared_cnn(epoch,
     
     Returns: Nothing.
     """
+    """
     global vis_win
+    """
 
     ## Here we are using the Controller to give us the network.
     ## We don't modify the Controller so we have it in evaluation mode rather than training mode.
@@ -228,6 +232,7 @@ def train_shared_cnn(epoch,
 
     ## This is for visualization.
 
+    """
     vis_win['shared_cnn_acc'] = vis.line(
         X=np.array([epoch]),
         Y=np.array([train_acc_meter.avg]),
@@ -241,6 +246,7 @@ def train_shared_cnn(epoch,
         win=vis_win['shared_cnn_loss'],
         opts=dict(title='shared_cnn_loss', xlabel='Iteration', ylabel='Loss'),
         update='append' if epoch > 0 else None)
+    """
 
     controller.train()
 
@@ -275,7 +281,9 @@ def train_controller(epoch,
     """
     print('Epoch ' + str(epoch) + ': Training controller')
 
+    """
     global vis_win
+    """
 
     shared_cnn.eval()
     valid_loader = data_loaders['valid_subset']
@@ -345,6 +353,7 @@ def train_controller(epoch,
                           '\ttime=%.2fit/s' % (1. / (end - start))
                 print(display)
 
+    """
     vis_win['controller_reward'] = vis.line(
         X=np.column_stack([epoch] * 2),
         Y=np.column_stack([reward_meter.avg, baseline_meter.avg]),
@@ -365,7 +374,8 @@ def train_controller(epoch,
         win=vis_win['controller_loss'],
         opts=dict(title='controller_loss', xlabel='Iteration', ylabel='Loss'),
         update='append' if epoch > 0 else None)
-
+    """
+    
     shared_cnn.train()
     return baseline
 
@@ -583,6 +593,12 @@ def train_fixed(start_epoch,
                           keep_prob=args.child_keep_prob,
                           fixed_arc=best_arc)
     fixed_cnn = fixed_cnn.cuda()
+    
+    ## For the case where there is more than one GPU
+    ###
+    if (torch.cuda.device_count() > 1):
+        fixed_cnn = nn.DataParallel(fixed_cnn)
+    ###
 
     fixed_cnn_optimizer = torch.optim.SGD(params=fixed_cnn.parameters(),
                                           lr=args.child_lr_max,
@@ -648,12 +664,22 @@ def main():
                             skip_target=args.controller_skip_target,
                             skip_weight=args.controller_skip_weight)
     controller = controller.cuda()
+    
+    ###
+    if (torch.cuda.device_count() > 1):
+        controller = nn.DataParallel(controller)
+    ###
 
     shared_cnn = SharedCNN(num_layers=args.child_num_layers,
                            num_branches=args.child_num_branches,
                            out_filters=args.child_out_filters,
                            keep_prob=args.child_keep_prob)
     shared_cnn = shared_cnn.cuda()
+    
+    ###
+    if (torch.cuda.device_count() > 1):
+        shared_cnn = nn.DataParallel(shared_cnn)
+    ###
 
     # https://github.com/melodyguan/enas/blob/master/src/utils.py#L218
     controller_optimizer = torch.optim.Adam(params=controller.parameters(),
