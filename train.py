@@ -6,7 +6,7 @@ import os
 import sys
 import time
 import visdom ## Visualization Library
-import argparse. ## Allows us to pass arguments in terminal for the code
+import argparse ## Allows us to pass arguments in terminal for the code
 import numpy as np
 
 import torch
