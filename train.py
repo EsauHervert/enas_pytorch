@@ -649,11 +649,11 @@ def main():
         sys.stdout = Logger(filename='logs/' + args.output_filename + '.log')
 
     print(args)
-    print()
+    print() ###
 
-    print("Loading Data.")
+    print("Loading Data.") ###
     data_loaders = load_datasets()
-    print("Data Loaded.")
+    print("Data Loaded.") ###
 
     controller = Controller(search_for=args.search_for,
                             search_whole_channels=True,
@@ -671,6 +671,8 @@ def main():
     ###
     if (torch.cuda.device_count() > 1):
         controller = nn.DataParallel(controller)
+        print("Using ", torch.cuda.device_count(), "GPUs.")
+        print()
     ###
 
     shared_cnn = SharedCNN(num_layers=args.child_num_layers,
@@ -683,13 +685,15 @@ def main():
     if (torch.cuda.device_count() > 1):
         shared_cnn = nn.DataParallel(shared_cnn)
     ###
-
+    
+    ## We will use the ADAM optimizer for the controller.
     # https://github.com/melodyguan/enas/blob/master/src/utils.py#L218
     controller_optimizer = torch.optim.Adam(params=controller.parameters(),
                                             lr=args.controller_lr,
                                             betas=(0.0, 0.999),
                                             eps=1e-3)
-
+    
+    ## We will use stochastic gradient descent on the child network
     # https://github.com/melodyguan/enas/blob/master/src/utils.py#L213
     shared_cnn_optimizer = torch.optim.SGD(params=shared_cnn.parameters(),
                                            lr=args.child_lr_max,
