@@ -24,7 +24,7 @@ from utils.cutout import Cutout ## Used in data augmentation
 parser = argparse.ArgumentParser(description='ENAS')
 
 parser.add_argument('--search_for', default='macro', choices=['macro']) ## This code only works with the Macro case.
-parser.add_argument('--data_path', default='/export/mlrg/terrance/Projects/data/', type=str) ## Where the data will be contained
+parser.add_argument('--data_path', default='Data/', type=str) ## Where the data will be contained
 parser.add_argument('--output_filename', default='ENAS', type=str) ## Name of the output file
 parser.add_argument('--resume', default='', type=str)
 parser.add_argument('--batch_size', type=int, default=128)
@@ -649,8 +649,11 @@ def main():
         sys.stdout = Logger(filename='logs/' + args.output_filename + '.log')
 
     print(args)
+    print()
 
+    print("Loading Data.")
     data_loaders = load_datasets()
+    print("Data Loaded.")
 
     controller = Controller(search_for=args.search_for,
                             search_whole_channels=True,
