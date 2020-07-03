@@ -118,7 +118,6 @@ class Controller(nn.Module):
         inputs = self.g_emb.weight
         skip_targets = torch.tensor([1.0 - self.skip_target, self.skip_target]).cuda()
 
-        So each 
         for layer_id in range(self.num_layers):
             if self.search_whole_channels:
                 inputs = inputs.unsqueeze(0) ## Will return a tensor with dimension 1xdim(inputs).
