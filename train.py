@@ -5,13 +5,13 @@
 import os
 import sys
 import time
-## import visdom ## Visualization Library
+import visdom ## Visualization Library
 import argparse ## Allows us to pass arguments in terminal for the code
 import numpy as np
 
 import torch
 import torch.nn as nn
-# from torch.autograd import Variable
+from torch.autograd import Variable
 from torchvision import datasets, transforms ## Here we have the cifar10 data set
 from torch.utils.data.dataset import Subset ## Subset is the training data partitioned to training and validation
 from torch.optim.lr_scheduler import CosineAnnealingLR ## Changing the learning rate as time goes by
@@ -60,12 +60,11 @@ parser.add_argument('--controller_bl_dec', type=float, default=0.99)
 
 args = parser.parse_args()
 
-"""
+
 vis = visdom.Visdom()
 vis.env = 'ENAS_' + args.output_filename
 vis_win = {'shared_cnn_acc': None, 'shared_cnn_loss': None, 'controller_reward': None,
            'controller_acc': None, 'controller_loss': None}
-"""
 
 ## Here we load the dataset whichi on our case is the CIFAR-10 dataset.
     ## Note that we can also try things such as MNIST, but we would have to change some values.
@@ -232,7 +231,6 @@ def train_shared_cnn(epoch,
 
     ## This is for visualization.
 
-    """
     vis_win['shared_cnn_acc'] = vis.line(
         X=np.array([epoch]),
         Y=np.array([train_acc_meter.avg]),
@@ -246,7 +244,6 @@ def train_shared_cnn(epoch,
         win=vis_win['shared_cnn_loss'],
         opts=dict(title='shared_cnn_loss', xlabel='Iteration', ylabel='Loss'),
         update='append' if epoch > 0 else None)
-    """
 
     controller.train()
 
@@ -281,9 +278,8 @@ def train_controller(epoch,
     """
     print('Epoch ' + str(epoch) + ': Training controller')
 
-    """
     global vis_win
-    """
+    
 
     shared_cnn.eval()
     valid_loader = data_loaders['valid_subset']
@@ -353,7 +349,6 @@ def train_controller(epoch,
                           '\ttime=%.2fit/s' % (1. / (end - start))
                 print(display)
 
-    """
     vis_win['controller_reward'] = vis.line(
         X=np.column_stack([epoch] * 2),
         Y=np.column_stack([reward_meter.avg, baseline_meter.avg]),
@@ -374,7 +369,6 @@ def train_controller(epoch,
         win=vis_win['controller_loss'],
         opts=dict(title='controller_loss', xlabel='Iteration', ylabel='Loss'),
         update='append' if epoch > 0 else None)
-    """
     
     shared_cnn.train()
     return baseline
@@ -671,7 +665,7 @@ def main():
     ###
     if (torch.cuda.device_count() > 1):
         controller = nn.DataParallel(controller)
-        print("Using ", torch.cuda.device_count(), "GPUs.")
+        print("Using ", torch.cuda.device_count(), " GPUs.")
         print()
     ###
 
