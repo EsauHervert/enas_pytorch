@@ -211,23 +211,20 @@ def train_shared_cnn(epoch,
         train_acc = torch.mean((torch.max(pred, 1)[1] == labels).type(torch.float))
 
         ## Add the loss and the accuracy to the meters.
-        #### Having issues
         train_acc_meter.update(train_acc.item())
-        print(train_acc.item())
-        
         loss_meter.update(loss.item())
-        print(loss.item())
 
         end = time.time()
 
         ## Display how we are doing based on how often we need to log the performance.
+        ### Note thet grad_norm was already a float so this code was modified.
         if (i) % args.log_every == 0:
             learning_rate = shared_cnn_optimizer.param_groups[0]['lr']
             display = 'epoch=' + str(epoch) + \
                       '\tch_step=' + str(i) + \
                       '\tloss=%.6f' % (loss_meter.val) + \
                       '\tlr=%.4f' % (learning_rate) + \
-                      '\t|g|=%.4f' % (grad_norm.item()) + \
+                      '\t|g|=%.4f' % (grad_norm) + \
                       '\tacc=%.4f' % (train_acc_meter.val) + \
                       '\ttime=%.2fit/s' % (1. / (end - start))
             print(display)
