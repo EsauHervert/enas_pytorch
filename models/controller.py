@@ -5,7 +5,7 @@
 import torch
 import torch.nn as nn
 
-## from torch.autograd import Variable
+from torch.autograd import Variable
     ## Deprecated, torch.tensors work as variables
     ## https://pytorch.org/docs/stable/autograd.html
 
