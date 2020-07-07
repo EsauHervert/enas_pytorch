@@ -167,9 +167,8 @@ def train_shared_cnn(epoch,
     
     Returns: Nothing.
     """
-    """
+    
     global vis_win
-    """
 
     ## Here we are using the Controller to give us the network.
     ## We don't modify the Controller so we have it in evaluation mode rather than training mode.
@@ -279,7 +278,6 @@ def train_controller(epoch,
     print('Epoch ' + str(epoch) + ': Training controller')
 
     global vis_win
-    
 
     shared_cnn.eval()
     valid_loader = data_loaders['valid_subset']
@@ -590,8 +588,10 @@ def train_fixed(start_epoch,
     
     ## For the case where there is more than one GPU
     ###
+    """
     if (torch.cuda.device_count() > 1):
         fixed_cnn = nn.DataParallel(fixed_cnn)
+    """
     ###
 
     fixed_cnn_optimizer = torch.optim.SGD(params=fixed_cnn.parameters(),
@@ -663,10 +663,12 @@ def main():
     controller = controller.cuda()
     
     ###
+    """
     if (torch.cuda.device_count() > 1):
         controller = nn.DataParallel(controller)
         print("Using ", torch.cuda.device_count(), " GPUs.")
         print()
+    """
     ###
 
     shared_cnn = SharedCNN(num_layers=args.child_num_layers,
@@ -676,8 +678,10 @@ def main():
     shared_cnn = shared_cnn.cuda()
     
     ###
+    """
     if (torch.cuda.device_count() > 1):
         shared_cnn = nn.DataParallel(shared_cnn)
+    """
     ###
     
     ## We will use the ADAM optimizer for the controller.
