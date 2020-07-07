@@ -211,7 +211,7 @@ def train_shared_cnn(epoch,
         train_acc = torch.mean((torch.max(pred, 1)[1] == labels).type(torch.float))
 
         ## Add the loss and the accuracy to the meters.
-        #### Having issue
+        #### Having issues
         train_acc_meter.update(train_acc.item())
         print(train_acc.item())
         
